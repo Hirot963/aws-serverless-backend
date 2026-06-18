@@ -238,7 +238,7 @@ exports.handler = async (e) => {
 | 手順 | 内容 |
 |------|------|
 | 1 | `/products` リソースを選択 → 「CORS を有効にする」をクリック |
-| 2 | Access-Control-Allow-Origin: `*`　Access-Control-Allow-Headers: `Content-Type,Authorization`　メソッド: GET, POST, OPTIONS にチェック (Postは今後関数で追加すると出てきます、今はないです) |
+| 2 | Access-Control-Allow-Origin: `*`　Access-Control-Allow-Headers: `Content-Type,Authorization`　メソッド: GET, POST, OPTIONS にチェック (Postは今後、関数を追加すると出てきます、今はないです) |
 | 3 | 「保存」をクリック |
 | 4 | 【重要】「API をデプロイ」→ ステージ: prod → 「デプロイ」を必ず実行する |
 
