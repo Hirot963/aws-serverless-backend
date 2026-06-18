@@ -148,12 +148,12 @@ AWS CLI は「ターミナルから AWS を操作するツール」です。コ�
 |------|------|
 | 1 | Lambda → 「関数を作成」→「一から作成」 |
 | 2 | 関数名を入力（例: `getProducts`）　ランタイム: Node.js 24.x |
-| 2-1 | 会社アカウントの場合「その他の設定」から「カスタム実行ロール」→「aws-serverless-vue-lambda-role」を選択 |
+| : | 会社アカウントの場合は「その他の設定」から「カスタム実行ロール」→「aws-serverless-vue-lambda-role」を選択 |
 | 3 | 「関数を作成」をクリック |
 | 4 | コードエディタに JavaScript コードを貼り付ける（後述） |
 | 5 | 「Deploy」ボタンをクリックして保存 |
 | 6 | 「設定」→「環境変数」→「編集」で `PRODUCTS_TABLE = Products` を追加 |
-| 7 | 個人アカウントの場合「設定」→「アクセス権限」→ ロール名リンクをクリック（IAM が開く）→「許可を追加」→「ポリシーをアタッチ」→「AmazonDynamoDBFullAccess」を追加 |
+| : | 個人アカウントの場合は「設定」→「アクセス権限」→ ロール名リンクをクリック（IAM が開く）→「許可を追加」→「ポリシーをアタッチ」→「AmazonDynamoDBFullAccess」を追加 |
 
 > ⚠️ **Lambda は JavaScript のみ対応**
 >
