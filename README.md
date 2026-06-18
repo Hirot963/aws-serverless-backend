@@ -7,7 +7,7 @@ AWS Lambda + API Gateway + DynamoDB + Cognito + S3 + CloudFront のサーバー�
 
 | サービス | 用途 |
 |---------|------|
-| AWS Lambda (Node.js 20) | API ロジック × 11 関数 |
+| AWS Lambda (Node.js 24) | API ロジック × 11 関数 |
 | Amazon API Gateway (REST) | エンドポイント管理・Cognito 認証 |
 | Amazon DynamoDB | 商品・注文・カートデータ |
 | Amazon Cognito | ユーザー認証・ロール管理（consumer / seller） |
