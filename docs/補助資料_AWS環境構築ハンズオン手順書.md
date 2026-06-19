@@ -103,7 +103,7 @@ AWS CLI は「ターミナルから AWS を操作するツール」です。コ�
 | 1 | DynamoDB → 「テーブルを作成」 |
 | 2 | テーブル名: `Products`　パーティションキー: `sellerId`（文字列）　ソートキー: `productId`（文字列） |
 | 3 | 「テーブルを作成」をクリック |
-| 4 | 作成後、テーブルを開く → 「インデックス」タブ → 「グローバルインデックスを作成」 |
+| 4 | 作成後、テーブルを開く → 「インデックス」タブ → 「グローバルセカンダリイインデックス(GSI)を作成」 |
 | 5 | PK: `category`（文字列）、SK: `createdAt`（文字列）、インデックス名: `category-createdAt-index` |
 
 ### 3-2. Orders テーブル
@@ -147,12 +147,13 @@ AWS CLI は「ターミナルから AWS を操作するツール」です。コ�
 | 手順 | 内容 |
 |------|------|
 | 1 | Lambda → 「関数を作成」→「一から作成」 |
-| 2 | 関数名を入力（例: `getProducts`）　ランタイム: Node.js 20.x |
+| 2 | 関数名を入力（例: `getProducts`）　ランタイム: Node.js 24.x |
+| : | 会社アカウントの場合は「その他の設定」から「カスタム実行ロール」→「aws-serverless-vue-lambda-role」を選択 |
 | 3 | 「関数を作成」をクリック |
 | 4 | コードエディタに JavaScript コードを貼り付ける（後述） |
 | 5 | 「Deploy」ボタンをクリックして保存 |
 | 6 | 「設定」→「環境変数」→「編集」で `PRODUCTS_TABLE = Products` を追加 |
-| 7 | 「設定」→「アクセス権限」→ ロール名リンクをクリック（IAM が開く）→「許可を追加」→「ポリシーをアタッチ」→「AmazonDynamoDBFullAccess」を追加 |
+| : | 個人アカウントの場合は「設定」→「アクセス権限」→ ロール名リンクをクリック（IAM が開く）→「許可を追加」→「ポリシーをアタッチ」→「AmazonDynamoDBFullAccess」を追加 |
 
 > ⚠️ **Lambda は JavaScript のみ対応**
 >
@@ -237,7 +238,7 @@ exports.handler = async (e) => {
 | 手順 | 内容 |
 |------|------|
 | 1 | `/products` リソースを選択 → 「CORS を有効にする」をクリック |
-| 2 | Access-Control-Allow-Origin: `*`　Access-Control-Allow-Headers: `Content-Type,Authorization`　メソッド: GET, POST, OPTIONS にチェック |
+| 2 | Access-Control-Allow-Origin: `*`　Access-Control-Allow-Headers: `Content-Type,Authorization`　メソッド: GET, POST, OPTIONS にチェック (Postは今後、関数を追加すると出てきます、今はないです) |
 | 3 | 「保存」をクリック |
 | 4 | 【重要】「API をデプロイ」→ ステージ: prod → 「デプロイ」を必ず実行する |
 
