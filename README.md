@@ -13,7 +13,6 @@ AWS Lambda + API Gateway + DynamoDB + Cognito + S3 + CloudFront のサーバー�
 | Amazon Cognito | ユーザー認証・ロール管理（consumer / seller） |
 | Amazon S3 | 商品画像ストレージ |
 | Amazon CloudFront | CDN 配信 |
-| AWS CDK (TypeScript) | インフラのコード管理 |
 
 ## API エンドポイント
 
