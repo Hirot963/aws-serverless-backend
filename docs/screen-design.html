@@ -1,0 +1,1819 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>画面設計書 — EC マーケットプレイス</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', Meiryo, sans-serif;
+    background: #f4f6f9;
+    color: #2c3e50;
+    line-height: 1.7;
+    font-size: 15px;
+  }
+
+  /* ─── Header ─── */
+  .hero {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    color: #fff;
+    padding: 56px 48px 48px;
+  }
+  .hero-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #64b5f6;
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+  .hero h1 {
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    line-height: 1.3;
+  }
+  .hero p {
+    font-size: 15px;
+    color: #b0bec5;
+    max-width: 640px;
+  }
+  .hero-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+  }
+  .badge {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 12px;
+    color: #e3f2fd;
+  }
+
+  /* ─── Layout ─── */
+  .container {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+  .section {
+    margin-bottom: 52px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #0f3460;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #0f3460;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* ─── Tables ─── */
+  .table-wrap {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e7ef;
+    overflow: hidden;
+    overflow-x: auto;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+  }
+  thead {
+    background: #1a1a2e;
+    color: #fff;
+  }
+  thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  tbody tr { border-bottom: 1px solid #f0f4f8; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #f8fafc; }
+  tbody td { padding: 11px 16px; vertical-align: middle; }
+
+  code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 12.5px;
+    background: #f5f5f5;
+    padding: 1px 5px;
+    border-radius: 3px;
+    color: #37474f;
+  }
+
+  /* ─── Role badges ─── */
+  .role-badge {
+    display: inline-block;
+    padding: 2px 9px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .role-all      { background: #e8f5e9; color: #2e7d32; }
+  .role-consumer { background: #e3f2fd; color: #1565c0; }
+  .role-seller   { background: #fff3e0; color: #bf360c; }
+
+  /* ─── Screen ID chip ─── */
+  .screen-id {
+    display: inline-block;
+    background: #0f3460;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: 'Consolas', monospace;
+  }
+
+  /* ─── Transition diagram ─── */
+  .diagram-wrap {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e7ef;
+    padding: 32px;
+    overflow-x: auto;
+  }
+
+  /* ─── Screen cards ─── */
+  .screen-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e0e7ef;
+    overflow: hidden;
+    margin-bottom: 40px;
+  }
+  .screen-card-header {
+    padding: 20px 28px 18px;
+    border-bottom: 1px solid #f0f4f8;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .screen-card-header .info { flex: 1; }
+  .screen-card-header .screen-name {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 4px;
+  }
+  .screen-card-header .screen-meta {
+    font-size: 13px;
+    color: #7f8c8d;
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .screen-card-header .screen-meta code {
+    font-size: 12px;
+  }
+
+  .screen-body {
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  @media (max-width: 780px) {
+    .screen-body { grid-template-columns: 1fr; }
+  }
+  .screen-body.full-width {
+    grid-template-columns: 1fr;
+  }
+
+  .sub-section-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #546e7a;
+    margin-bottom: 12px;
+  }
+
+  /* ─── Wireframe ─── */
+  .wireframe {
+    background: #f8fafc;
+    border: 1px solid #e0e7ef;
+    border-radius: 10px;
+    padding: 20px;
+  }
+
+  /* Rendered wireframe components */
+  .wf-window {
+    background: #fff;
+    border: 1.5px solid #cfd8dc;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 12.5px;
+  }
+  .wf-header {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .wf-header .logo { color: #64b5f6; }
+  .wf-header .wf-nav { display: flex; gap: 10px; align-items: center; font-size: 12px; }
+  .wf-header .cart-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: default;
+  }
+  .wf-body { padding: 16px; }
+
+  .wf-login-box {
+    max-width: 280px;
+    margin: 0 auto;
+    background: #f8fafc;
+    border: 1px solid #e0e7ef;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .wf-login-title {
+    text-align: center;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 14px;
+    color: #1a1a2e;
+  }
+  .wf-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #546e7a;
+    margin-bottom: 4px;
+    margin-top: 10px;
+  }
+  .wf-label:first-of-type { margin-top: 0; }
+  .wf-input {
+    width: 100%;
+    border: 1px solid #cfd8dc;
+    border-radius: 4px;
+    padding: 6px 8px;
+    font-size: 12px;
+    color: #90a4ae;
+    background: #fff;
+  }
+  .wf-btn {
+    display: block;
+    width: 100%;
+    margin-top: 14px;
+    background: #0f3460;
+    color: #fff;
+    text-align: center;
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .wf-btn.secondary {
+    background: #f0f4f8;
+    color: #546e7a;
+    border: 1px solid #cfd8dc;
+  }
+  .wf-btn.small {
+    width: auto;
+    display: inline-block;
+    padding: 5px 12px;
+    font-size: 11px;
+  }
+  .wf-error {
+    background: #fce4ec;
+    color: #b71c1c;
+    font-size: 11px;
+    padding: 5px 8px;
+    border-radius: 4px;
+    margin-top: 8px;
+  }
+
+  /* Product grid wireframe */
+  .wf-filter-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+  .wf-filter-chip {
+    border: 1px solid #cfd8dc;
+    border-radius: 16px;
+    padding: 3px 10px;
+    font-size: 11px;
+    color: #546e7a;
+  }
+  .wf-filter-chip.active {
+    background: #0f3460;
+    color: #fff;
+    border-color: #0f3460;
+  }
+  .wf-product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .wf-product-card {
+    border: 1px solid #e0e7ef;
+    border-radius: 6px;
+    overflow: hidden;
+    font-size: 11px;
+  }
+  .wf-product-img {
+    background: #eceff1;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #90a4ae;
+    font-size: 10px;
+  }
+  .wf-product-info { padding: 6px; }
+  .wf-product-name { font-weight: 600; color: #1a1a2e; margin-bottom: 2px; font-size: 10.5px; }
+  .wf-product-price { color: #0f3460; font-weight: 700; font-size: 11px; }
+  .wf-product-stock { color: #90a4ae; font-size: 10px; }
+  .wf-product-btn {
+    display: block;
+    margin: 4px 6px 6px;
+    background: #e3f2fd;
+    color: #1565c0;
+    text-align: center;
+    padding: 3px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+  }
+  .wf-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    font-size: 11px;
+    color: #546e7a;
+  }
+  .wf-page-btn {
+    border: 1px solid #cfd8dc;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 10px;
+  }
+
+  /* Product detail wireframe */
+  .wf-detail {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .wf-detail-img {
+    background: #eceff1;
+    height: 100px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #90a4ae;
+    font-size: 11px;
+  }
+  .wf-detail-info { font-size: 11.5px; }
+  .wf-detail-name { font-size: 13px; font-weight: 700; color: #1a1a2e; margin-bottom: 6px; }
+  .wf-detail-price { font-size: 16px; font-weight: 700; color: #0f3460; margin-bottom: 8px; }
+  .wf-detail-meta { color: #7f8c8d; margin-bottom: 4px; font-size: 11px; }
+  .wf-qty-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 8px 0;
+    font-size: 12px;
+  }
+  .wf-qty-btn {
+    border: 1px solid #cfd8dc;
+    border-radius: 3px;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  /* Cart wireframe */
+  .wf-cart-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f4f8;
+    font-size: 11.5px;
+  }
+  .wf-cart-item:last-child { border-bottom: none; }
+  .wf-cart-thumb {
+    width: 36px;
+    height: 36px;
+    background: #eceff1;
+    border-radius: 4px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #90a4ae;
+    font-size: 9px;
+  }
+  .wf-cart-name { flex: 1; font-weight: 600; color: #1a1a2e; }
+  .wf-cart-price { color: #0f3460; font-weight: 700; white-space: nowrap; }
+  .wf-cart-qty { color: #7f8c8d; white-space: nowrap; }
+  .wf-trash { color: #ef9a9a; font-size: 13px; cursor: default; }
+  .wf-total {
+    text-align: right;
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-top: 10px;
+  }
+
+  /* Order history / confirmation */
+  .wf-order-card {
+    border: 1px solid #e0e7ef;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+  }
+  .wf-order-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #f8fafc;
+    font-size: 11.5px;
+  }
+  .wf-order-id { font-family: 'Consolas', monospace; font-weight: 700; color: #1a1a2e; font-size: 11px; }
+  .wf-order-date { color: #90a4ae; font-size: 10.5px; }
+  .wf-order-total { font-weight: 700; color: #0f3460; }
+  .wf-status {
+    display: inline-block;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+  .wf-order-items { padding: 6px 12px; font-size: 11px; color: #546e7a; }
+
+  /* Complete screen */
+  .wf-complete {
+    text-align: center;
+    padding: 24px 16px;
+  }
+  .wf-complete .checkmark {
+    font-size: 36px;
+    margin-bottom: 10px;
+  }
+  .wf-complete .msg {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 6px;
+  }
+  .wf-complete .order-num {
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    color: #7f8c8d;
+    margin-bottom: 16px;
+  }
+  .wf-complete .btn-row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+  }
+
+  /* Seller product table wireframe */
+  .wf-table {
+    width: 100%;
+    font-size: 11px;
+    border-collapse: collapse;
+  }
+  .wf-table th {
+    background: #f0f4f8;
+    color: #546e7a;
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 10.5px;
+    font-weight: 600;
+  }
+  .wf-table td {
+    padding: 6px 8px;
+    border-bottom: 1px solid #f0f4f8;
+    color: #37474f;
+  }
+  .wf-action-btn {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-right: 3px;
+  }
+  .wf-action-btn.edit { background: #e3f2fd; color: #1565c0; }
+  .wf-action-btn.del  { background: #fce4ec; color: #b71c1c; }
+
+  /* Seller form wireframe */
+  .wf-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+    margin: 8px 0;
+  }
+  .wf-form-field { }
+  .wf-upload-box {
+    border: 1.5px dashed #90a4ae;
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    color: #90a4ae;
+    font-size: 11px;
+    margin: 8px 0;
+  }
+
+  /* ─── Spec sub-sections ─── */
+  .spec-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .spec-table-wrap {
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e0e7ef;
+    overflow: hidden;
+    overflow-x: auto;
+  }
+  .spec-table-wrap table thead { background: #37474f; }
+
+  .flow-box {
+    background: #f8fafc;
+    border: 1px solid #e0e7ef;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-size: 13px;
+    line-height: 1.9;
+  }
+  .flow-box ol { padding-left: 20px; }
+  .flow-box li { margin-bottom: 2px; }
+
+  /* ─── Transition SVG diagram ─── */
+  .transition-svg-wrap {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e7ef;
+    padding: 32px;
+    overflow-x: auto;
+  }
+
+  /* ─── Route guard table ─── */
+  .guard-table-wrap {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e7ef;
+    overflow: hidden;
+    overflow-x: auto;
+    margin-top: 24px;
+  }
+  .guard-table-wrap table thead { background: #263238; }
+
+  /* ─── Header spec ─── */
+  .header-spec-wrap {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e7ef;
+    overflow: hidden;
+  }
+  .header-preview {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+  }
+  .header-preview .logo-txt { color: #64b5f6; font-weight: 700; }
+  .header-preview .nav-items { display: flex; gap: 12px; align-items: center; font-size: 13px; }
+  .header-preview .cart-icon {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 4px;
+    padding: 3px 10px;
+    font-size: 12px;
+  }
+  .header-preview .user-menu {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: #b0bec5;
+  }
+  .header-spec-body { padding: 16px 24px; }
+
+  /* ─── Common specs ─── */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 640px) {
+    .two-col { grid-template-columns: 1fr; }
+  }
+  .spec-card {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e7ef;
+    overflow: hidden;
+  }
+  .spec-card-title {
+    background: #37474f;
+    color: #fff;
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .spec-card-body { padding: 16px; }
+  .spec-list { list-style: none; }
+  .spec-list li {
+    padding: 5px 0;
+    border-bottom: 1px solid #f0f4f8;
+    font-size: 13px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .spec-list li:last-child { border-bottom: none; }
+  .spec-list .code-tag {
+    display: inline-block;
+    background: #fce4ec;
+    color: #c62828;
+    font-family: 'Consolas', monospace;
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* ─── Responsive table ─── */
+  .responsive-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  @media (max-width: 640px) {
+    .responsive-grid { grid-template-columns: 1fr; }
+  }
+  .resp-card {
+    background: #fff;
+    border-radius: 10px;
+    border: 1px solid #e0e7ef;
+    padding: 16px;
+    text-align: center;
+  }
+  .resp-card .bp-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin-bottom: 6px;
+  }
+  .resp-card .bp-range {
+    font-size: 11px;
+    color: #90a4ae;
+    margin-bottom: 10px;
+    font-family: 'Consolas', monospace;
+  }
+  .resp-card .bp-cols {
+    font-size: 22px;
+    font-weight: 700;
+    color: #0f3460;
+    margin-bottom: 4px;
+  }
+  .resp-card .bp-table {
+    font-size: 12px;
+    color: #546e7a;
+  }
+
+  /* back to top */
+  .nav-pills {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 32px;
+  }
+  .nav-pill {
+    background: #fff;
+    border: 1px solid #e0e7ef;
+    border-radius: 20px;
+    padding: 5px 14px;
+    font-size: 12px;
+    color: #0f3460;
+    text-decoration: none;
+    font-weight: 600;
+    transition: background 0.15s;
+  }
+  .nav-pill:hover { background: #e3f2fd; }
+</style>
+</head>
+<body>
+
+<!-- ─── Hero ─── -->
+<div class="hero">
+  <div class="hero-label">Design Document</div>
+  <h1>🖥 画面設計書</h1>
+  <p>EC マーケットプレイス（サーバーレス実装課題）— 画面一覧・遷移・ワイヤーフレーム・UI 仕様</p>
+  <div class="hero-badges">
+    <span class="badge">Vue 3</span>
+    <span class="badge">React 18</span>
+    <span class="badge">Angular 17</span>
+    <span class="badge">10 画面</span>
+    <span class="badge">2026-06-22</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ─── Quick nav ─── -->
+  <div class="nav-pills">
+    <a class="nav-pill" href="#screen-list">画面一覧</a>
+    <a class="nav-pill" href="#transition">画面遷移</a>
+    <a class="nav-pill" href="#common">共通コンポーネント</a>
+    <a class="nav-pill" href="#s01">S01 ログイン</a>
+    <a class="nav-pill" href="#s02">S02 商品一覧</a>
+    <a class="nav-pill" href="#s03">S03 商品詳細</a>
+    <a class="nav-pill" href="#s04">S04 カート</a>
+    <a class="nav-pill" href="#s05">S05 注文確認</a>
+    <a class="nav-pill" href="#s06">S06 注文完了</a>
+    <a class="nav-pill" href="#s07">S07 注文履歴</a>
+    <a class="nav-pill" href="#s08">S08 商品登録</a>
+    <a class="nav-pill" href="#s09">S09 商品管理</a>
+    <a class="nav-pill" href="#s10">S10 受注一覧</a>
+    <a class="nav-pill" href="#common-spec">共通仕様</a>
+    <a class="nav-pill" href="#responsive">レスポンシブ</a>
+  </div>
+
+  <!-- ─── 1. 画面一覧 ─── -->
+  <div class="section" id="screen-list">
+    <div class="section-title"><span class="icon">📋</span> 画面一覧</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>画面名</th>
+            <th>ロール</th>
+            <th>URL パス</th>
+            <th>説明</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="screen-id">S01</span></td><td>ログイン画面</td><td><span class="role-badge role-all">全員</span></td><td><code>/login</code></td><td>Cognito 認証</td></tr>
+          <tr><td><span class="screen-id">S02</span></td><td>商品一覧画面</td><td><span class="role-badge role-all">全員</span></td><td><code>/products</code></td><td>カテゴリ絞り込み・ページネーション</td></tr>
+          <tr><td><span class="screen-id">S03</span></td><td>商品詳細画面</td><td><span class="role-badge role-all">全員</span></td><td><code>/products/:sellerId/:productId</code></td><td>商品情報・カート追加</td></tr>
+          <tr><td><span class="screen-id">S04</span></td><td>カート画面</td><td><span class="role-badge role-consumer">Consumer</span></td><td><code>/cart</code></td><td>カート確認・削除</td></tr>
+          <tr><td><span class="screen-id">S05</span></td><td>注文確認画面</td><td><span class="role-badge role-consumer">Consumer</span></td><td><code>/checkout</code></td><td>注文内容確認・確定</td></tr>
+          <tr><td><span class="screen-id">S06</span></td><td>注文完了画面</td><td><span class="role-badge role-consumer">Consumer</span></td><td><code>/checkout/complete</code></td><td>完了メッセージ</td></tr>
+          <tr><td><span class="screen-id">S07</span></td><td>注文履歴画面</td><td><span class="role-badge role-consumer">Consumer</span></td><td><code>/orders</code></td><td>過去の注文一覧</td></tr>
+          <tr><td><span class="screen-id">S08</span></td><td>商品登録画面</td><td><span class="role-badge role-seller">Seller</span></td><td><code>/seller/products/new</code></td><td>商品情報入力・画像アップロード</td></tr>
+          <tr><td><span class="screen-id">S09</span></td><td>商品管理画面</td><td><span class="role-badge role-seller">Seller</span></td><td><code>/seller/products</code></td><td>自分の商品一覧・編集・削除</td></tr>
+          <tr><td><span class="screen-id">S10</span></td><td>受注一覧画面</td><td><span class="role-badge role-seller">Seller</span></td><td><code>/seller/orders</code></td><td>受注確認</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─── 2. 画面遷移図 ─── -->
+  <div class="section" id="transition">
+    <div class="section-title"><span class="icon">🔀</span> 画面遷移図</div>
+    <div class="transition-svg-wrap">
+      <svg viewBox="0 0 860 440" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:860px;display:block;margin:0 auto;">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#90a4ae"/>
+          </marker>
+          <marker id="arr-blue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#1976d2"/>
+          </marker>
+          <marker id="arr-orange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#f57c00"/>
+          </marker>
+        </defs>
+
+        <!-- S01 Login (center top) -->
+        <rect x="330" y="20" width="140" height="44" rx="8" fill="#1a1a2e" stroke="none"/>
+        <text x="400" y="39" text-anchor="middle" fill="#64b5f6" font-size="10" font-weight="700">S01</text>
+        <text x="400" y="54" text-anchor="middle" fill="#fff" font-size="12" font-weight="600">ログイン</text>
+
+        <!-- Auth success arrow down -->
+        <line x1="400" y1="64" x2="400" y2="94" stroke="#90a4ae" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="405" y="83" fill="#90a4ae" font-size="10">認証成功</text>
+
+        <!-- Fork: consumer left, seller right -->
+        <line x1="400" y1="96" x2="200" y2="96" stroke="#1976d2" stroke-width="1.5"/>
+        <line x1="400" y1="96" x2="620" y2="96" stroke="#f57c00" stroke-width="1.5"/>
+        <line x1="200" y1="96" x2="200" y2="126" stroke="#1976d2" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+        <line x1="620" y1="96" x2="620" y2="126" stroke="#f57c00" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+        <text x="280" y="90" text-anchor="middle" fill="#1976d2" font-size="10" font-weight="600">consumer</text>
+        <text x="530" y="90" text-anchor="middle" fill="#f57c00" font-size="10" font-weight="600">seller</text>
+
+        <!-- S02 商品一覧 (consumer) -->
+        <rect x="120" y="128" width="160" height="44" rx="8" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5"/>
+        <text x="200" y="147" text-anchor="middle" fill="#1976d2" font-size="10" font-weight="700">S02</text>
+        <text x="200" y="162" text-anchor="middle" fill="#1565c0" font-size="12" font-weight="600">商品一覧</text>
+
+        <!-- S02 → S03 -->
+        <line x1="200" y1="172" x2="200" y2="232" stroke="#1976d2" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+
+        <!-- S03 商品詳細 -->
+        <rect x="120" y="234" width="160" height="44" rx="8" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5"/>
+        <text x="200" y="253" text-anchor="middle" fill="#1976d2" font-size="10" font-weight="700">S03</text>
+        <text x="200" y="268" text-anchor="middle" fill="#1565c0" font-size="12" font-weight="600">商品詳細</text>
+        <text x="290" y="268" fill="#90a4ae" font-size="10">カートに追加</text>
+
+        <!-- S03 → S04 -->
+        <line x1="200" y1="278" x2="200" y2="338" stroke="#1976d2" stroke-width="1.5" marker-end="url(#arr-blue)"/>
+
+        <!-- S04 カート -->
+        <rect x="120" y="340" width="160" height="44" rx="8" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5"/>
+        <text x="200" y="359" text-anchor="middle" fill="#1976d2" font-size="10" font-weight="700">S04</text>
+        <text x="200" y="374" text-anchor="middle" fill="#1565c0" font-size="12" font-weight="600">カート</text>
+
+        <!-- S04 → S05 -->
+        <line x1="200" y1="384" x2="200" y2="410" stroke="#90a4ae" stroke-width="1.2" stroke-dasharray="4,3"/>
+        <line x1="200" y1="410" x2="370" y2="410" stroke="#90a4ae" stroke-width="1.2" stroke-dasharray="4,3"/>
+        <line x1="370" y1="410" x2="370" y2="384" stroke="#90a4ae" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+        <text x="280" y="406" text-anchor="middle" fill="#90a4ae" font-size="10">注文確定へ</text>
+
+        <!-- S05 注文確認 -->
+        <rect x="290" y="234" width="160" height="44" rx="8" fill="#e8f5e9" stroke="#43a047" stroke-width="1.5"/>
+        <text x="370" y="253" text-anchor="middle" fill="#43a047" font-size="10" font-weight="700">S05</text>
+        <text x="370" y="268" text-anchor="middle" fill="#2e7d32" font-size="12" font-weight="600">注文確認</text>
+
+        <!-- S05 → S06 -->
+        <line x1="370" y1="278" x2="370" y2="338" stroke="#43a047" stroke-width="1.5" marker-end="url(#arr)"/>
+        <text x="376" y="310" fill="#90a4ae" font-size="10">確定</text>
+
+        <!-- S06 注文完了 -->
+        <rect x="290" y="340" width="160" height="44" rx="8" fill="#e8f5e9" stroke="#43a047" stroke-width="1.5"/>
+        <text x="370" y="359" text-anchor="middle" fill="#43a047" font-size="10" font-weight="700">S06</text>
+        <text x="370" y="374" text-anchor="middle" fill="#2e7d32" font-size="12" font-weight="600">注文完了</text>
+
+        <!-- S06 → S07 -->
+        <line x1="450" y1="362" x2="490" y2="362" stroke="#90a4ae" stroke-width="1.2" marker-end="url(#arr)"/>
+
+        <!-- S07 注文履歴 -->
+        <rect x="492" y="340" width="160" height="44" rx="8" fill="#e3f2fd" stroke="#1976d2" stroke-width="1.5"/>
+        <text x="572" y="359" text-anchor="middle" fill="#1976d2" font-size="10" font-weight="700">S07</text>
+        <text x="572" y="374" text-anchor="middle" fill="#1565c0" font-size="12" font-weight="600">注文履歴</text>
+
+        <!-- Seller side -->
+        <!-- S09 商品管理 -->
+        <rect x="540" y="128" width="160" height="44" rx="8" fill="#fff3e0" stroke="#f57c00" stroke-width="1.5"/>
+        <text x="620" y="147" text-anchor="middle" fill="#f57c00" font-size="10" font-weight="700">S09</text>
+        <text x="620" y="162" text-anchor="middle" fill="#bf360c" font-size="12" font-weight="600">商品管理</text>
+
+        <!-- S09 → S08 -->
+        <line x1="580" y1="172" x2="540" y2="234" stroke="#f57c00" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+        <text x="536" y="208" fill="#f57c00" font-size="10">＋新規</text>
+
+        <!-- S09 → S10 -->
+        <line x1="660" y1="172" x2="700" y2="234" stroke="#f57c00" stroke-width="1.5" marker-end="url(#arr-orange)"/>
+        <text x="673" y="212" fill="#f57c00" font-size="10">受注確認</text>
+
+        <!-- S08 商品登録 -->
+        <rect x="492" y="234" width="120" height="44" rx="8" fill="#fff3e0" stroke="#f57c00" stroke-width="1.5"/>
+        <text x="552" y="253" text-anchor="middle" fill="#f57c00" font-size="10" font-weight="700">S08</text>
+        <text x="552" y="268" text-anchor="middle" fill="#bf360c" font-size="12" font-weight="600">商品登録</text>
+
+        <!-- S08 → S09 back -->
+        <line x1="612" y1="256" x2="640" y2="256" stroke="#90a4ae" stroke-width="1" stroke-dasharray="3,3"/>
+        <line x1="640" y1="256" x2="640" y2="172" stroke="#90a4ae" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#arr)"/>
+
+        <!-- S10 受注一覧 -->
+        <rect x="680" y="234" width="140" height="44" rx="8" fill="#fff3e0" stroke="#f57c00" stroke-width="1.5"/>
+        <text x="750" y="253" text-anchor="middle" fill="#f57c00" font-size="10" font-weight="700">S10</text>
+        <text x="750" y="268" text-anchor="middle" fill="#bf360c" font-size="12" font-weight="600">受注一覧</text>
+
+        <!-- Legend -->
+        <rect x="20" y="20" width="120" height="82" rx="6" fill="#f8fafc" stroke="#e0e7ef" stroke-width="1"/>
+        <text x="30" y="38" fill="#546e7a" font-size="10" font-weight="700">Legend</text>
+        <rect x="30" y="46" width="12" height="8" rx="2" fill="#e3f2fd" stroke="#1976d2" stroke-width="1"/>
+        <text x="46" y="55" fill="#546e7a" font-size="10">Consumer 画面</text>
+        <rect x="30" y="60" width="12" height="8" rx="2" fill="#fff3e0" stroke="#f57c00" stroke-width="1"/>
+        <text x="46" y="69" fill="#546e7a" font-size="10">Seller 画面</text>
+        <rect x="30" y="74" width="12" height="8" rx="2" fill="#e8f5e9" stroke="#43a047" stroke-width="1"/>
+        <text x="46" y="83" fill="#546e7a" font-size="10">購入フロー</text>
+        <rect x="30" y="88" width="12" height="8" rx="2" fill="#1a1a2e" stroke="none"/>
+        <text x="46" y="97" fill="#546e7a" font-size="10">認証</text>
+      </svg>
+    </div>
+
+    <!-- Route guard table -->
+    <div class="guard-table-wrap" style="margin-top:24px;">
+      <table>
+        <thead>
+          <tr>
+            <th>パス</th>
+            <th>未ログイン</th>
+            <th>Consumer（seller 専用へ）</th>
+            <th>Seller（consumer 専用へ）</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>/login</code></td><td>表示</td><td><code>/products</code> へリダイレクト</td><td><code>/seller/products</code> へリダイレクト</td></tr>
+          <tr><td><code>/products</code>, <code>/products/*</code></td><td><code>/login</code> へリダイレクト</td><td>表示</td><td>表示</td></tr>
+          <tr><td><code>/cart</code>, <code>/checkout</code>, <code>/orders</code></td><td><code>/login</code> へリダイレクト</td><td>表示</td><td><code>/seller/products</code> へリダイレクト</td></tr>
+          <tr><td><code>/seller/*</code></td><td><code>/login</code> へリダイレクト</td><td><code>/products</code> へリダイレクト</td><td>表示</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─── 3. 共通コンポーネント ─── -->
+  <div class="section" id="common">
+    <div class="section-title"><span class="icon">🧩</span> 共通コンポーネント — ヘッダー</div>
+    <div class="header-spec-wrap">
+      <div class="header-preview">
+        <div class="logo-txt">🛍 EC Market</div>
+        <div class="nav-items">
+          <span class="cart-icon">🛒 カート 3</span>
+          <span class="user-menu">田中 太郎 ▾</span>
+        </div>
+      </div>
+      <div class="header-spec-body">
+        <div class="table-wrap" style="margin-top:0;">
+          <table>
+            <thead>
+              <tr><th>要素</th><th>Consumer 表示</th><th>Seller 表示</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>ロゴ</td><td><code>/products</code> へリンク</td><td><code>/seller/products</code> へリンク</td></tr>
+              <tr><td>カートアイコン</td><td>表示（アイテム数バッジ付き）</td><td>非表示</td></tr>
+              <tr><td>ユーザー名</td><td>表示</td><td>表示</td></tr>
+              <tr><td>ドロップダウン</td><td>ログアウト</td><td>ログアウト</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 画面仕様 ─── -->
+  <div class="section-title" style="margin-bottom:32px;"><span class="icon">🖥</span> 各画面仕様</div>
+
+  <!-- S01 -->
+  <div class="screen-card" id="s01">
+    <div class="screen-card-header">
+      <div class="info">
+        <div class="screen-name"><span class="screen-id" style="font-size:14px;margin-right:8px;">S01</span> ログイン画面</div>
+        <div class="screen-meta">
+          <code>/login</code>
+          <span class="role-badge role-all">全員（未ログイン）</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <!-- Wireframe -->
+      <div>
+        <div class="sub-section-title">ワイヤーフレーム</div>
+        <div class="wireframe">
+          <div class="wf-window">
+            <div class="wf-header">
+              <span class="logo">🛍 EC Market</span>
+            </div>
+            <div class="wf-body">
+              <div class="wf-login-box">
+                <div class="wf-login-title">ログイン</div>
+                <div class="wf-label">メールアドレス</div>
+                <div class="wf-input">user@example.com</div>
+                <div class="wf-label">パスワード</div>
+                <div class="wf-input">••••••••</div>
+                <div class="wf-error" style="display:none;">認証に失敗しました</div>
+                <div class="wf-btn">ログイン</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Spec -->
+      <div class="spec-wrap">
+        <div>
+          <div class="sub-section-title">UI 要素・入力仕様</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>要素</th><th>種類</th><th>バリデーション</th></tr></thead>
+              <tbody>
+                <tr><td>メールアドレス</td><td><code>&lt;input type="email"&gt;</code></td><td>必須・メール形式</td></tr>
+                <tr><td>パスワード</td><td><code>&lt;input type="password"&gt;</code></td><td>必須・8文字以上</td></tr>
+                <tr><td>ログインボタン</td><td><code>&lt;button&gt;</code></td><td>ローディング中は非活性</td></tr>
+                <tr><td>エラーメッセージ</td><td>テキスト（赤）</td><td>認証失敗時に表示</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="sub-section-title">処理フロー</div>
+          <div class="flow-box">
+            <ol>
+              <li>入力バリデーション（クライアント）</li>
+              <li><code>Amplify.signIn(username, password)</code></li>
+              <li>成功 → <code>fetchAuthSession()</code> → JWT 取得</li>
+              <li>ロール確認（<code>cognito:groups</code>）<br>
+                &nbsp;• consumer → <code>/products</code><br>
+                &nbsp;• seller → <code>/seller/products</code>
+              </li>
+              <li>失敗 → エラーメッセージ表示</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S02 -->
+  <div class="screen-card" id="s02">
+    <div class="screen-card-header">
+      <div class="info">
+        <div class="screen-name"><span class="screen-id" style="font-size:14px;margin-right:8px;">S02</span> 商品一覧画面</div>
+        <div class="screen-meta">
+          <code>/products</code>
+          <span class="role-badge role-all">全員（要ログイン）</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div>
+        <div class="sub-section-title">ワイヤーフレーム</div>
+        <div class="wireframe">
+          <div class="wf-window">
+            <div class="wf-header">
+              <span class="logo">🛍 EC Market</span>
+              <div class="wf-nav"><span class="cart-btn">🛒 3</span><span style="color:#b0bec5;font-size:11px;">田中 ▾</span></div>
+            </div>
+            <div class="wf-body">
+              <div class="wf-filter-bar">
+                <span class="wf-filter-chip active">全て</span>
+                <span class="wf-filter-chip">electronics</span>
+                <span class="wf-filter-chip">fashion</span>
+                <span class="wf-filter-chip">books</span>
+                <span class="wf-filter-chip">food</span>
+              </div>
+              <div class="wf-product-grid">
+                <div class="wf-product-card">
+                  <div class="wf-product-img">📷 画像</div>
+                  <div class="wf-product-info">
+                    <div class="wf-product-name">ワイヤレスイヤホン</div>
+                    <div class="wf-product-price">¥ 4,980</div>
+                    <div class="wf-product-stock">在庫: 25</div>
+                  </div>
+                  <div class="wf-product-btn">カートへ追加</div>
+                </div>
+                <div class="wf-product-card">
+                  <div class="wf-product-img">📷 画像</div>
+                  <div class="wf-product-info">
+                    <div class="wf-product-name">レザーバッグ</div>
+                    <div class="wf-product-price">¥ 12,800</div>
+                    <div class="wf-product-stock">在庫: 8</div>
+                  </div>
+                  <div class="wf-product-btn">カートへ追加</div>
+                </div>
+                <div class="wf-product-card">
+                  <div class="wf-product-img">📷 画像</div>
+                  <div class="wf-product-info">
+                    <div class="wf-product-name">プログラミング入門</div>
+                    <div class="wf-product-price">¥ 2,500</div>
+                    <div class="wf-product-stock">在庫: 50</div>
+                  </div>
+                  <div class="wf-product-btn">カートへ追加</div>
+                </div>
+              </div>
+              <div class="wf-pagination">
+                <span class="wf-page-btn">← 前へ</span>
+                <span>1 / 5</span>
+                <span class="wf-page-btn">次へ →</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-wrap">
+        <div>
+          <div class="sub-section-title">UI 要素仕様</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>要素</th><th>説明</th></tr></thead>
+              <tbody>
+                <tr><td>カテゴリフィルター</td><td>選択で即時再取得</td></tr>
+                <tr><td>商品カード</td><td>クリックで S03 へ遷移</td></tr>
+                <tr><td>商品画像</td><td>CloudFront URL / 未設定時はプレースホルダー</td></tr>
+                <tr><td>在庫数</td><td>在庫 0 の場合「在庫なし」表示、カートボタン非活性</td></tr>
+                <tr><td>カートへ追加ボタン</td><td>Consumer のみ表示（Seller には非表示）</td></tr>
+                <tr><td>ページネーション</td><td><code>lastKey</code> ベースのカーソル方式</td></tr>
+                <tr><td>ローディング</td><td>スケルトン or スピナー（API 取得中）</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="sub-section-title">API 連携</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>タイミング</th><th>エンドポイント</th><th>パラメータ</th></tr></thead>
+              <tbody>
+                <tr><td>画面表示時</td><td><code>GET /products</code></td><td><code>limit=12</code></td></tr>
+                <tr><td>カテゴリ変更時</td><td><code>GET /products</code></td><td><code>category=xxx</code></td></tr>
+                <tr><td>次ページ</td><td><code>GET /products</code></td><td><code>lastKey=カーソル</code></td></tr>
+                <tr><td>カートへ追加</td><td><code>POST /cart</code></td><td><code>productId, sellerId, quantity=1</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S03 -->
+  <div class="screen-card" id="s03">
+    <div class="screen-card-header">
+      <div class="info">
+        <div class="screen-name"><span class="screen-id" style="font-size:14px;margin-right:8px;">S03</span> 商品詳細画面</div>
+        <div class="screen-meta">
+          <code>/products/:sellerId/:productId</code>
+          <span class="role-badge role-all">全員（要ログイン）</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div>
+        <div class="sub-section-title">ワイヤーフレーム</div>
+        <div class="wireframe">
+          <div class="wf-window">
+            <div class="wf-header"><span class="logo">🛍 EC Market</span><div class="wf-nav"><span class="cart-btn">🛒 3</span></div></div>
+            <div class="wf-body">
+              <div style="font-size:11px;color:#90a4ae;margin-bottom:10px;">← 商品一覧に戻る</div>
+              <div class="wf-detail">
+                <div class="wf-detail-img">📷 商品画像<br><span style="font-size:9px;">400 × 400px</span></div>
+                <div class="wf-detail-info">
+                  <div class="wf-detail-name">ワイヤレスイヤホン Pro</div>
+                  <div class="wf-detail-price">¥ 4,980</div>
+                  <div class="wf-detail-meta">カテゴリ: Electronics</div>
+                  <div class="wf-detail-meta">在庫: 25 個</div>
+                  <div class="wf-qty-row">
+                    <span style="font-size:11px;color:#546e7a;">数量:</span>
+                    <span class="wf-qty-btn">−</span>
+                    <span style="font-size:12px;font-weight:700;padding:0 4px;">1</span>
+                    <span class="wf-qty-btn">＋</span>
+                  </div>
+                  <div class="wf-btn" style="font-size:11px;padding:7px;">🛒 カートに追加</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-wrap">
+        <div>
+          <div class="sub-section-title">UI 要素仕様</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>要素</th><th>説明</th></tr></thead>
+              <tbody>
+                <tr><td>商品画像</td><td>CloudFront URL、最大 400×400px</td></tr>
+                <tr><td>価格</td><td><code>¥ X,XXX</code> 形式（大きめ表示）</td></tr>
+                <tr><td>在庫数</td><td>在庫 0 → 「在庫なし」、ボタン非活性</td></tr>
+                <tr><td>数量入力</td><td>カウンター（− / ＋）最小 1、最大 在庫数</td></tr>
+                <tr><td>カートに追加ボタン</td><td>Consumer のみ表示</td></tr>
+                <tr><td>戻るリンク</td><td>ブラウザ履歴 or <code>/products</code> へ</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="sub-section-title">API 連携</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>タイミング</th><th>エンドポイント</th></tr></thead>
+              <tbody>
+                <tr><td>画面表示時</td><td><code>GET /products/:sellerId/:productId</code></td></tr>
+                <tr><td>カートに追加</td><td><code>POST /cart</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S04 -->
+  <div class="screen-card" id="s04">
+    <div class="screen-card-header">
+      <div class="info">
+        <div class="screen-name"><span class="screen-id" style="font-size:14px;margin-right:8px;">S04</span> カート画面</div>
+        <div class="screen-meta">
+          <code>/cart</code>
+          <span class="role-badge role-consumer">Consumer のみ</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div>
+        <div class="sub-section-title">ワイヤーフレーム</div>
+        <div class="wireframe">
+          <div class="wf-window">
+            <div class="wf-header"><span class="logo">🛍 EC Market</span><div class="wf-nav"><span class="cart-btn">🛒 3</span></div></div>
+            <div class="wf-body">
+              <div style="font-size:13px;font-weight:700;margin-bottom:10px;">🛒 カート（3 点）</div>
+              <div class="wf-cart-item">
+                <div class="wf-cart-thumb">📷</div>
+                <div class="wf-cart-name">ワイヤレスイヤホン Pro</div>
+                <div class="wf-cart-price">¥ 4,980</div>
+                <div class="wf-cart-qty">× 2</div>
+                <div class="wf-trash">🗑</div>
+              </div>
+              <div class="wf-cart-item">
+                <div class="wf-cart-thumb">📷</div>
+                <div class="wf-cart-name">レザートートバッグ</div>
+                <div class="wf-cart-price">¥ 12,800</div>
+                <div class="wf-cart-qty">× 1</div>
+                <div class="wf-trash">🗑</div>
+              </div>
+              <div class="wf-cart-item">
+                <div class="wf-cart-thumb">📷</div>
+                <div class="wf-cart-name">プログラミング入門</div>
+                <div class="wf-cart-price">¥ 2,500</div>
+                <div class="wf-cart-qty">× 1</div>
+                <div class="wf-trash">🗑</div>
+              </div>
+              <div class="wf-total">小計: ¥ 25,260</div>
+              <div class="wf-btn" style="margin-top:10px;font-size:12px;">注文確認へ進む →</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-wrap">
+        <div>
+          <div class="sub-section-title">UI 要素仕様</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>要素</th><th>説明</th></tr></thead>
+              <tbody>
+                <tr><td>カートアイテムリスト</td><td>商品画像・名前・価格・数量・削除ボタン</td></tr>
+                <tr><td>削除ボタン 🗑</td><td>確認なしで即削除</td></tr>
+                <tr><td>小計</td><td>アイテム数 × 価格の合計</td></tr>
+                <tr><td>注文確認へ進むボタン</td><td>カートが空の場合は非活性</td></tr>
+                <tr><td>空カートメッセージ</td><td>アイテム 0 件のとき表示</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="sub-section-title">API 連携</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>タイミング</th><th>エンドポイント</th></tr></thead>
+              <tbody>
+                <tr><td>画面表示時</td><td><code>GET /cart</code></td></tr>
+                <tr><td>削除ボタン押下</td><td><code>DELETE /cart/:productId</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S05 -->
+  <div class="screen-card" id="s05">
+    <div class="screen-card-header">
+      <div class="info">
+        <div class="screen-name"><span class="screen-id" style="font-size:14px;margin-right:8px;">S05</span> 注文確認画面</div>
+        <div class="screen-meta">
+          <code>/checkout</code>
+          <span class="role-badge role-consumer">Consumer のみ</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div>
+        <div class="sub-section-title">ワイヤーフレーム</div>
+        <div class="wireframe">
+          <div class="wf-window">
+            <div class="wf-header"><span class="logo">🛍 EC Market</span></div>
+            <div class="wf-body">
+              <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 注文確認</div>
+              <div class="wf-order-card">
+                <div style="padding:8px 12px;font-size:11.5px;">
+                  <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f4f8;">
+                    <span>ワイヤレスイヤホン Pro × 2</span><span style="font-weight:700;">¥ 9,960</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f4f8;">
+                    <span>レザートートバッグ × 1</span><span style="font-weight:700;">¥ 12,800</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid #f0f4f8;">
+                    <span>プログラミング入門 × 1</span><span style="font-weight:700;">¥ 2,500</span>
+                  </div>
+                  <div style="display:flex;justify-content:space-between;padding:6px 0;font-weight:700;color:#0f3460;">
+                    <span>合計</span><span>¥ 25,260</span>
+                  </div>
+                </div>
+              </div>
+              <div style="font-size:10.5px;color:#90a4ae;margin:8px 0;">※ 注文確定後のキャンセルはできません。</div>
+              <div style="display:flex;gap:8px;">
+                <div class="wf-btn secondary small">← カートに戻る</div>
+                <div class="wf-btn small">✓ 注文を確定する</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-wrap">
+        <div>
+          <div class="sub-section-title">UI 要素仕様</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>要素</th><th>説明</th></tr></thead>
+              <tbody>
+                <tr><td>注文内容リスト</td><td>読み取り専用（変更不可）</td></tr>
+                <tr><td>合計金額</td><td>税込み合計（大きめ表示）</td></tr>
+                <tr><td>エラーメッセージ</td><td>在庫不足（409）等のエラー時に赤表示</td></tr>
+                <tr><td>注文確定ボタン</td><td>送信中はローディング・非活性</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="sub-section-title">API 連携</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>タイミング</th><th>エンドポイント</th><th>備考</th></tr></thead>
+              <tbody>
+                <tr><td>注文確定ボタン押下</td><td><code>POST /orders</code></td><td>成功 → S06、409 → エラー表示</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S06 -->
+  <div class="screen-card" id="s06">
+    <div class="screen-card-header">
+      <div class="info">
+        <div class="screen-name"><span class="screen-id" style="font-size:14px;margin-right:8px;">S06</span> 注文完了画面</div>
+        <div class="screen-meta">
+          <code>/checkout/complete</code>
+          <span class="role-badge role-consumer">Consumer のみ</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-body full-width">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+        <div>
+          <div class="sub-section-title">ワイヤーフレーム</div>
+          <div class="wireframe">
+            <div class="wf-window">
+              <div class="wf-header"><span class="logo">🛍 EC Market</span></div>
+              <div class="wf-body">
+                <div class="wf-complete">
+                  <div class="checkmark">✅</div>
+                  <div class="msg">ご注文ありがとうございました</div>
+                  <div class="order-num">注文番号: #9Z8Y7X6W</div>
+                  <div class="btn-row">
+                    <div class="wf-btn secondary small">商品一覧へ戻る</div>
+                    <div class="wf-btn small">注文履歴を見る</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="sub-section-title">仕様</div>
+          <div class="flow-box">
+            <ul style="padding-left:18px;line-height:2;">
+              <li><code>POST /orders</code> 成功後に遷移（注文 ID を受け取り表示）</li>
+              <li>直接 URL アクセスは <code>/products</code> にリダイレクト</li>
+              <li>ブラウザバックで S05 に戻った場合も <code>/products</code> にリダイレクト（再注文防止）</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S07 -->
+  <div class="screen-card" id="s07">
+    <div class="screen-card-header">
+      <div class="info">
+        <div class="screen-name"><span class="screen-id" style="font-size:14px;margin-right:8px;">S07</span> 注文履歴画面</div>
+        <div class="screen-meta">
+          <code>/orders</code>
+          <span class="role-badge role-consumer">Consumer のみ</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div>
+        <div class="sub-section-title">ワイヤーフレーム</div>
+        <div class="wireframe">
+          <div class="wf-window">
+            <div class="wf-header"><span class="logo">🛍 EC Market</span><div class="wf-nav"><span class="cart-btn">🛒 0</span></div></div>
+            <div class="wf-body">
+              <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📦 注文履歴</div>
+              <div class="wf-order-card">
+                <div class="wf-order-header">
+                  <span class="wf-order-id">#9Z8Y7X6W</span>
+                  <span class="wf-order-date">2024-03-10 15:00</span>
+                  <span class="wf-order-total">¥ 25,260</span>
+                  <span class="wf-status">確認済</span>
+                </div>
+                <div class="wf-order-items">・ワイヤレスイヤホン Pro × 2 ／ レザートートバッグ × 1 ／ プログラミング入門 × 1</div>
+              </div>
+              <div class="wf-order-card" style="margin-top:6px;">
+                <div class="wf-order-header">
+                  <span class="wf-order-id">#A1B2C3D4</span>
+                  <span class="wf-order-date">2024-02-20 10:30</span>
+                  <span class="wf-order-total">¥ 3,200</span>
+                  <span class="wf-status">確認済</span>
+                </div>
+                <div class="wf-order-items">・ノート × 2</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-wrap">
+        <div>
+          <div class="sub-section-title">UI 要素仕様</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>要素</th><th>説明</th></tr></thead>
+              <tbody>
+                <tr><td>注文カード</td><td>注文ID・日時・合計・ステータス・商品リスト</td></tr>
+                <tr><td>ステータスバッジ</td><td><code>confirmed</code> → 「確認済」</td></tr>
+                <tr><td>空メッセージ</td><td>注文がない場合に表示</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="sub-section-title">API 連携</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>タイミング</th><th>エンドポイント</th></tr></thead>
+              <tbody>
+                <tr><td>画面表示時</td><td><code>GET /orders</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S08 -->
+  <div class="screen-card" id="s08">
+    <div class="screen-card-header">
+      <div class="info">
+        <div class="screen-name"><span class="screen-id" style="font-size:14px;margin-right:8px;">S08</span> 商品登録画面</div>
+        <div class="screen-meta">
+          <code>/seller/products/new</code>
+          <span class="role-badge role-seller">Seller のみ</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div>
+        <div class="sub-section-title">ワイヤーフレーム</div>
+        <div class="wireframe">
+          <div class="wf-window">
+            <div class="wf-header"><span class="logo">🛍 EC Market</span><div class="wf-nav"><span style="color:#b0bec5;font-size:11px;">田中 ▾</span></div></div>
+            <div class="wf-body">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span style="font-size:11px;color:#90a4ae;">← 商品管理に戻る</span>
+                <span style="font-size:13px;font-weight:700;">＋ 商品登録</span>
+              </div>
+              <div class="wf-label">商品名 *</div>
+              <div class="wf-input">ワイヤレスイヤホン Pro</div>
+              <div class="wf-form-row">
+                <div class="wf-form-field">
+                  <div class="wf-label">カテゴリ *</div>
+                  <div class="wf-input" style="font-size:11px;">electronics ▾</div>
+                </div>
+                <div class="wf-form-field">
+                  <div class="wf-label">価格（円）*</div>
+                  <div class="wf-input" style="font-size:11px;">4980</div>
+                </div>
+                <div class="wf-form-field">
+                  <div class="wf-label">在庫数 *</div>
+                  <div class="wf-input" style="font-size:11px;">25</div>
+                </div>
+              </div>
+              <div class="wf-label">商品画像</div>
+              <div class="wf-upload-box">📁 ファイルを選択<br><span style="font-size:10px;">JPEG / PNG、最大 5MB</span></div>
+              <div class="wf-btn" style="font-size:11px;">商品を登録する</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-wrap">
+        <div>
+          <div class="sub-section-title">UI 要素・入力仕様</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>要素</th><th>種類</th><th>バリデーション</th></tr></thead>
+              <tbody>
+                <tr><td>商品名</td><td><code>input[type=text]</code></td><td>必須・最大 100 文字</td></tr>
+                <tr><td>カテゴリ</td><td><code>select</code></td><td>必須</td></tr>
+                <tr><td>価格</td><td><code>input[type=number]</code></td><td>必須・1 以上・整数</td></tr>
+                <tr><td>在庫数</td><td><code>input[type=number]</code></td><td>必須・0 以上・整数</td></tr>
+                <tr><td>商品画像</td><td><code>input[type=file]</code></td><td>任意・JPEG/PNG・5MB 以下</td></tr>
+                <tr><td>画像プレビュー</td><td><code>img</code></td><td>FileReader でプレビュー表示</td></tr>
+                <tr><td>登録ボタン</td><td><code>button</code></td><td>送信中は非活性・ローディング表示</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="sub-section-title">処理フロー（画像あり）</div>
+          <div class="flow-box">
+            <ol>
+              <li>クライアントバリデーション</li>
+              <li><code>GET /products/upload-url</code>（Presigned URL 取得）</li>
+              <li>取得した URL へ画像を直接 <code>PUT</code>（S3 へ）</li>
+              <li><code>POST /products</code>（imageKey を含めてリクエスト）</li>
+              <li>成功 → S09（商品管理）へ遷移</li>
+            </ol>
+          </div>
+          <div class="sub-section-title" style="margin-top:12px;">処理フロー（画像なし）</div>
+          <div class="flow-box">
+            <ol>
+              <li>クライアントバリデーション</li>
+              <li><code>POST /products</code>（imageKey なし）</li>
+              <li>成功 → S09 へ遷移</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S09 -->
+  <div class="screen-card" id="s09">
+    <div class="screen-card-header">
+      <div class="info">
+        <div class="screen-name"><span class="screen-id" style="font-size:14px;margin-right:8px;">S09</span> 商品管理画面</div>
+        <div class="screen-meta">
+          <code>/seller/products</code>
+          <span class="role-badge role-seller">Seller のみ</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div>
+        <div class="sub-section-title">ワイヤーフレーム</div>
+        <div class="wireframe">
+          <div class="wf-window">
+            <div class="wf-header"><span class="logo">🛍 EC Market</span><div class="wf-nav"><span style="color:#b0bec5;font-size:11px;">田中 ▾</span></div></div>
+            <div class="wf-body">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span style="font-size:13px;font-weight:700;">📦 商品管理</span>
+                <div class="wf-btn small">＋ 新しい商品を登録</div>
+              </div>
+              <table class="wf-table">
+                <tr>
+                  <th>画像</th><th>商品名</th><th>カテゴリ</th><th>価格</th><th>在庫</th><th>操作</th>
+                </tr>
+                <tr>
+                  <td style="color:#90a4ae;font-size:10px;">📷</td>
+                  <td>ワイヤレスイヤホン</td>
+                  <td>electronics</td>
+                  <td>¥4,980</td>
+                  <td>25</td>
+                  <td><span class="wf-action-btn edit">編集</span><span class="wf-action-btn del">削除</span></td>
+                </tr>
+                <tr>
+                  <td style="color:#90a4ae;font-size:10px;">📷</td>
+                  <td>レザーバッグ</td>
+                  <td>fashion</td>
+                  <td>¥12,800</td>
+                  <td>8</td>
+                  <td><span class="wf-action-btn edit">編集</span><span class="wf-action-btn del">削除</span></td>
+                </tr>
+                <tr>
+                  <td>　</td>
+                  <td>入門書</td>
+                  <td>books</td>
+                  <td>¥2,500</td>
+                  <td>50</td>
+                  <td><span class="wf-action-btn edit">編集</span><span class="wf-action-btn del">削除</span></td>
+                </tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-wrap">
+        <div>
+          <div class="sub-section-title">UI 要素仕様</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>要素</th><th>説明</th></tr></thead>
+              <tbody>
+                <tr><td>新規登録ボタン</td><td>S08 へ遷移</td></tr>
+                <tr><td>商品テーブル</td><td>自分の商品のみ表示</td></tr>
+                <tr><td>編集ボタン</td><td>インライン編集 or モーダルで名前・価格・在庫を編集</td></tr>
+                <tr><td>削除ボタン</td><td>確認ダイアログ → <code>DELETE /products/:sellerId/:productId</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="sub-section-title">API 連携</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>タイミング</th><th>エンドポイント</th></tr></thead>
+              <tbody>
+                <tr><td>画面表示時</td><td><code>GET /products</code>（自分の sellerId で絞り込み）</td></tr>
+                <tr><td>保存ボタン</td><td><code>PUT /products/:sellerId/:productId</code></td></tr>
+                <tr><td>削除ボタン</td><td><code>DELETE /products/:sellerId/:productId</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- S10 -->
+  <div class="screen-card" id="s10">
+    <div class="screen-card-header">
+      <div class="info">
+        <div class="screen-name"><span class="screen-id" style="font-size:14px;margin-right:8px;">S10</span> 受注一覧画面</div>
+        <div class="screen-meta">
+          <code>/seller/orders</code>
+          <span class="role-badge role-seller">Seller のみ</span>
+        </div>
+      </div>
+    </div>
+    <div class="screen-body">
+      <div>
+        <div class="sub-section-title">ワイヤーフレーム</div>
+        <div class="wireframe">
+          <div class="wf-window">
+            <div class="wf-header"><span class="logo">🛍 EC Market</span><div class="wf-nav"><span style="color:#b0bec5;font-size:11px;">田中 ▾</span></div></div>
+            <div class="wf-body">
+              <div style="font-size:13px;font-weight:700;margin-bottom:10px;">📋 受注一覧</div>
+              <div class="wf-order-card">
+                <div class="wf-order-header">
+                  <span class="wf-order-id">#9Z8Y7X6W</span>
+                  <span class="wf-order-date">2024-03-10 15:00</span>
+                  <span style="font-size:11px;color:#546e7a;">田中 太郎</span>
+                  <span class="wf-order-total">¥ 9,960</span>
+                  <span class="wf-status">確認済</span>
+                </div>
+                <div class="wf-order-items">・ワイヤレスイヤホン Pro × 2　¥ 9,960</div>
+              </div>
+              <div class="wf-order-card" style="margin-top:6px;">
+                <div class="wf-order-header">
+                  <span class="wf-order-id">#A1B2C3D4</span>
+                  <span class="wf-order-date">2024-03-08 09:15</span>
+                  <span style="font-size:11px;color:#546e7a;">鈴木 花子</span>
+                  <span class="wf-order-total">¥ 4,980</span>
+                  <span class="wf-status">確認済</span>
+                </div>
+                <div class="wf-order-items">・ワイヤレスイヤホン Pro × 1　¥ 4,980</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="spec-wrap">
+        <div>
+          <div class="sub-section-title">UI 要素仕様</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>要素</th><th>説明</th></tr></thead>
+              <tbody>
+                <tr><td>受注テーブル</td><td>新着順（<code>createdAt</code> 降順）</td></tr>
+                <tr><td>注文明細</td><td>商品名・数量・小計（展開可能）</td></tr>
+                <tr><td>ステータスバッジ</td><td><code>confirmed</code> → 「確認済」</td></tr>
+                <tr><td>空メッセージ</td><td>受注なしの場合に表示</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="sub-section-title">API 連携</div>
+          <div class="spec-table-wrap">
+            <table>
+              <thead><tr><th>タイミング</th><th>エンドポイント</th></tr></thead>
+              <tbody>
+                <tr><td>画面表示時</td><td><code>GET /seller/orders</code></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── 5. 共通仕様 ─── -->
+  <div class="section" id="common-spec">
+    <div class="section-title"><span class="icon">⚙️</span> エラー・ローディング共通仕様</div>
+    <div class="two-col">
+      <div class="spec-card">
+        <div class="spec-card-title">ローディング表示</div>
+        <div class="spec-card-body">
+          <ul class="spec-list">
+            <li><span class="code-tag">一覧取得中</span> スケルトンカード（3×2 グリッド）</li>
+            <li><span class="code-tag">詳細取得中</span> スケルトンレイアウト</li>
+            <li><span class="code-tag">ボタン送信中</span> ボタン内スピナー + 非活性</li>
+          </ul>
+        </div>
+      </div>
+      <div class="spec-card">
+        <div class="spec-card-title">バリデーションエラー</div>
+        <div class="spec-card-body">
+          <ul class="spec-list">
+            <li>各入力フィールドの直下に<span style="color:#b71c1c;font-weight:600;">赤字</span>で表示</li>
+            <li>送信ボタンは全バリデーションが OK になるまで非活性（または送信時にまとめて検証）</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="table-wrap" style="margin-top:16px;">
+      <table>
+        <thead>
+          <tr><th>エラー種別</th><th>表示場所</th><th>メッセージ例</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>401</code> / 未ログイン</td><td>—</td><td><code>/login</code> へリダイレクト</td></tr>
+          <tr><td><code>403</code> 権限なし</td><td>ページ上部バナー（赤）</td><td>この操作を行う権限がありません</td></tr>
+          <tr><td><code>404</code> 見つからない</td><td>ページ中央</td><td>商品が見つかりませんでした</td></tr>
+          <tr><td><code>409</code> 在庫不足</td><td>フォーム上部（赤）</td><td>在庫が不足しています。カートを確認してください</td></tr>
+          <tr><td><code>500</code> サーバーエラー</td><td>ページ上部バナー（赤）</td><td>サーバーエラーが発生しました。しばらくしてから再試行してください</td></tr>
+          <tr><td>ネットワークエラー</td><td>ページ上部バナー（赤）</td><td>通信エラーが発生しました</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ─── 6. レスポンシブ ─── -->
+  <div class="section" id="responsive">
+    <div class="section-title"><span class="icon">📱</span> レスポンシブ対応</div>
+    <div class="responsive-grid">
+      <div class="resp-card">
+        <div class="bp-label">📱 スマートフォン</div>
+        <div class="bp-range">〜 640px</div>
+        <div class="bp-cols">1</div>
+        <div class="bp-table">カード列数</div>
+        <div style="margin-top:8px;font-size:11px;color:#90a4ae;">テーブル → カード形式に切り替え</div>
+      </div>
+      <div class="resp-card">
+        <div class="bp-label">📟 タブレット</div>
+        <div class="bp-range">641px 〜 1024px</div>
+        <div class="bp-cols">2</div>
+        <div class="bp-table">カード列数</div>
+        <div style="margin-top:8px;font-size:11px;color:#90a4ae;">テーブル → 横スクロール</div>
+      </div>
+      <div class="resp-card">
+        <div class="bp-label">🖥 PC</div>
+        <div class="bp-range">1025px 〜</div>
+        <div class="bp-cols">3</div>
+        <div class="bp-table">カード列数</div>
+        <div style="margin-top:8px;font-size:11px;color:#90a4ae;">通常テーブル表示</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /container -->
+</body>
+</html>
