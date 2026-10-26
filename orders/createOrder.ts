@@ -40,7 +40,6 @@ export const handler = async (
       0,
     );
 
-    // 出品者ごとに商品をグループ化
     const itemsBySeller: Record<string, typeof items> = {};
     for (const item of items) {
       if (!itemsBySeller[item.sellerId]) {

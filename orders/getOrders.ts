@@ -7,13 +7,11 @@ export const handler = async (
   e: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // 1. 購入者 ID（Cognito sub）の取得
     const buyerId = e.requestContext.authorizer?.claims?.sub;
     if (!buyerId) {
       return forbidden("Unauthorized: buyer ID not found");
     }
 
-    // 2. DynamoDB から自分の注文履歴を取得（PK: buyerId）
     const result = await db.send(
       new QueryCommand({
         TableName: ORDERS_TABLE,
@@ -26,7 +24,6 @@ export const handler = async (
 
     const items = result.Items ?? [];
 
-    // 3. 注文日時（createdAt）の新しい順にソート
     items.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
