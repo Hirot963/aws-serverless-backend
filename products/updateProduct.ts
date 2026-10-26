@@ -1,92 +1,102 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { UpdateCommand } from '@aws-sdk/lib-dynamodb';
-import { db, PRODUCTS_TABLE } from '../shared/db';
-import { ok, badReq, forbidden, notFound, internal } from '../shared/response';
+import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { db, PRODUCTS_TABLE } from "../shared/db";
+import { ok, badReq, forbidden, notFound, internal } from "../shared/response";
 
 export const handler = async (
-  e: APIGatewayProxyEvent
+  e: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
     const claims = e.requestContext?.authorizer?.claims;
     const callerId = claims?.sub;
-    const groupsRaw = claims?.['cognito:groups'];
+    const groupsRaw = claims?.["cognito:groups"];
     const groups = Array.isArray(groupsRaw)
       ? groupsRaw
-      : typeof groupsRaw === 'string'
-      ? [groupsRaw]
-      : [];
+      : typeof groupsRaw === "string"
+        ? [groupsRaw]
+        : [];
 
     if (!callerId) {
-      return forbidden('認証情報が見つかりません');
+      return forbidden("認証情報が見つかりません");
     }
 
-    if (!groups.includes('seller')) {
-      return forbidden('出品者権限が必要です');
+    if (!groups.includes("seller")) {
+      return forbidden("出品者権限が必要です");
     }
 
     const sellerId = e.pathParameters?.sellerId;
     const productId = e.pathParameters?.productId;
 
     if (!sellerId || !productId) {
-      return badReq('sellerId または productId が指定されていません');
+      return badReq("sellerId または productId が指定されていません");
     }
 
     if (sellerId !== callerId) {
-      return forbidden('他人の商品は編集できません');
+      return forbidden("他人の商品は編集できません");
     }
 
     if (!e.body) {
-      return badReq('リクエストボディが空です');
+      return badReq("リクエストボディが空です");
     }
 
     let body: any;
     try {
-      body = typeof e.body === 'string' ? JSON.parse(e.body) : e.body;
+      body = typeof e.body === "string" ? JSON.parse(e.body) : e.body;
     } catch {
-      return badReq('JSON の形式が不正です');
+      return badReq("JSON の形式が不正です");
     }
 
     const { name, price, category, stock, imageKey, imageUrl } = body;
 
-    if (!name || typeof name !== 'string' || name.trim().length === 0) {
-      return badReq('商品名は必須です');
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      return badReq("商品名は必須です");
     }
     if (name.length > 100) {
-      return badReq('商品名は100文字以内で入力してください');
+      return badReq("商品名は100文字以内で入力してください");
     }
-    if (typeof price !== 'number' || price < 1 || !Number.isInteger(price)) {
-      return badReq('価格は1以上の整数で入力してください');
+    if (typeof price !== "number" || price < 1 || !Number.isInteger(price)) {
+      return badReq("価格は1以上の整数で入力してください");
     }
-    if (!category || typeof category !== 'string') {
-      return badReq('カテゴリは必須です');
+    if (!category || typeof category !== "string") {
+      return badReq("カテゴリは必須です");
     }
-    if (typeof stock !== 'number' || stock < 0 || !Number.isInteger(stock)) {
-      return badReq('在庫数は0以上の整数で入力してください');
+    if (typeof stock !== "number" || stock < 0 || !Number.isInteger(stock)) {
+      return badReq("在庫数は0以上の整数で入力してください");
     }
 
     const updatedAt = new Date().toISOString();
 
     const expressionAttributeNames: Record<string, string> = {
-      '#name': 'name',
+      "#name": "name",
     };
     const expressionAttributeValues: Record<string, any> = {
-      ':name': name.trim(),
-      ':price': price,
-      ':category': category,
-      ':stock': stock,
-      ':updatedAt': updatedAt,
+      ":name": name.trim(),
+      ":price": price,
+      ":category": category,
+      ":stock": stock,
+      ":updatedAt": updatedAt,
     };
 
     let updateExpression =
-      'SET #name = :name, price = :price, category = :category, stock = :stock, updatedAt = :updatedAt';
+      "SET #name = :name, price = :price, category = :category, stock = :stock, updatedAt = :updatedAt";
+    const removeAttributes: string[] = [];
 
     if (imageKey) {
-      updateExpression += ', imageKey = :imageKey';
-      expressionAttributeValues[':imageKey'] = imageKey;
+      updateExpression += ", imageKey = :imageKey";
+      expressionAttributeValues[":imageKey"] = imageKey;
+    } else if (imageKey === null) {
+      removeAttributes.push("imageKey");
     }
+
     if (imageUrl) {
-      updateExpression += ', imageUrl = :imageUrl';
-      expressionAttributeValues[':imageUrl'] = imageUrl;
+      updateExpression += ", imageUrl = :imageUrl";
+      expressionAttributeValues[":imageUrl"] = imageUrl;
+    } else if (imageUrl === null) {
+      removeAttributes.push("imageUrl");
+    }
+
+    if (removeAttributes.length > 0) {
+      updateExpression += ` REMOVE ${removeAttributes.join(", ")}`;
     }
 
     const result = await db.send(
@@ -99,16 +109,16 @@ export const handler = async (
         UpdateExpression: updateExpression,
         ExpressionAttributeNames: expressionAttributeNames,
         ExpressionAttributeValues: expressionAttributeValues,
-        ConditionExpression: 'attribute_exists(productId)',
-        ReturnValues: 'ALL_NEW',
-      })
+        ConditionExpression: "attribute_exists(productId)",
+        ReturnValues: "ALL_NEW",
+      }),
     );
 
     return ok(result.Attributes);
   } catch (err: any) {
-    console.error('updateProduct エラー:', err);
-    if (err.name === 'ConditionalCheckFailedException') {
-      return notFound('指定された商品が見つかりません');
+    console.error("updateProduct エラー:", err);
+    if (err.name === "ConditionalCheckFailedException") {
+      return notFound("指定された商品が見つかりません");
     }
     return internal();
   }

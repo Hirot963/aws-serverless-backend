@@ -1,8 +1,14 @@
 import { randomUUID } from "crypto";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { TransactWriteCommand } from "@aws-sdk/lib-dynamodb";
+import { TransactWriteCommand, GetCommand } from "@aws-sdk/lib-dynamodb";
 import { db, PRODUCTS_TABLE, ORDERS_TABLE } from "../shared/db";
-import { created, badReq, forbidden, internal } from "../shared/response";
+import {
+  created,
+  badReq,
+  forbidden,
+  notFound,
+  internal,
+} from "../shared/response";
 
 export const handler = async (
   e: APIGatewayProxyEvent,
@@ -35,13 +41,40 @@ export const handler = async (
 
     const createdAt = new Date().toISOString();
 
-    const totalPrice = items.reduce(
-      (sum, item) => sum + (Number(item.price) || 0) * item.quantity,
+    const verifiedItems: Array<{
+      sellerId: string;
+      productId: string;
+      name: string;
+      price: number;
+      quantity: number;
+    }> = [];
+
+    for (const item of items) {
+      const prodRes = await db.send(
+        new GetCommand({
+          TableName: PRODUCTS_TABLE,
+          Key: { sellerId: item.sellerId, productId: item.productId },
+        }),
+      );
+      if (!prodRes.Item) {
+        return notFound("指定された商品が見つかりません");
+      }
+      verifiedItems.push({
+        sellerId: item.sellerId,
+        productId: item.productId,
+        name: prodRes.Item.name,
+        price: Number(prodRes.Item.price),
+        quantity: item.quantity,
+      });
+    }
+
+    const totalPrice = verifiedItems.reduce(
+      (sum, item) => sum + item.price * item.quantity,
       0,
     );
 
-    const itemsBySeller: Record<string, typeof items> = {};
-    for (const item of items) {
+    const itemsBySeller: Record<string, typeof verifiedItems> = {};
+    for (const item of verifiedItems) {
       if (!itemsBySeller[item.sellerId]) {
         itemsBySeller[item.sellerId] = [];
       }
@@ -50,7 +83,7 @@ export const handler = async (
 
     const transactItems: any[] = [];
 
-    for (const item of items) {
+    for (const item of verifiedItems) {
       transactItems.push({
         Update: {
           TableName: PRODUCTS_TABLE,
@@ -59,7 +92,7 @@ export const handler = async (
             productId: item.productId,
           },
           UpdateExpression: "SET stock = stock - :qty",
-          ConditionExpression: "stock >= :qty",
+          ConditionExpression: "attribute_exists(productId) AND stock >= :qty",
           ExpressionAttributeValues: {
             ":qty": item.quantity,
           },
