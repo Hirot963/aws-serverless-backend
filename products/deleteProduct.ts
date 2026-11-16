@@ -1,26 +1,20 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { DeleteCommand } from '@aws-sdk/lib-dynamodb';
 import { db, PRODUCTS_TABLE } from '../shared/db';
-import { ok, badReq, forbidden, internal } from '../shared/response';
+import { ok, badReq, forbidden, notFound, internal } from '../shared/response';
+import { getCaller } from '../shared/auth';
 
 export const handler = async (
   e: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const claims = e.requestContext?.authorizer?.claims;
-    const callerId = claims?.sub;
-    const groupsRaw = claims?.['cognito:groups'];
-    const groups = Array.isArray(groupsRaw)
-      ? groupsRaw
-      : typeof groupsRaw === 'string'
-      ? [groupsRaw]
-      : [];
+    const caller = getCaller(e);
 
-    if (!callerId) {
+    if (!caller.sub) {
       return forbidden('認証情報が見つかりません');
     }
 
-    if (!groups.includes('seller')) {
+    if (!caller.isSeller) {
       return forbidden('出品者権限が必要です');
     }
 
@@ -31,7 +25,7 @@ export const handler = async (
       return badReq('sellerId または productId が指定されていません');
     }
 
-    if (sellerId !== callerId) {
+    if (sellerId !== caller.sub) {
       return forbidden('他人の商品は削除できません');
     }
 
@@ -42,12 +36,16 @@ export const handler = async (
           sellerId,
           productId,
         },
+        ConditionExpression: 'attribute_exists(productId)',
       })
     );
 
     return ok({ message: '商品を削除しました', productId });
-  } catch (err) {
+  } catch (err: any) {
     console.error('deleteProduct エラー:', err);
+    if (err?.name === 'ConditionalCheckFailedException') {
+      return notFound('指定された商品が見つかりません');
+    }
     return internal();
   }
 };

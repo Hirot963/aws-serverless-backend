@@ -11,4 +11,5 @@ export const noContent= ()           => ({ statusCode: 204, headers: CORS, body:
 export const badReq   = (m: string)  => ({ statusCode: 400, headers: CORS, body: JSON.stringify({ message: m }) });
 export const forbidden= (m='Forbidden') => ({ statusCode: 403, headers: CORS, body: JSON.stringify({ message: m }) });
 export const notFound = (m='Not found') => ({ statusCode: 404, headers: CORS, body: JSON.stringify({ message: m }) });
+export const conflict = (m: string, extra: Record<string, unknown> = {}) => ({ statusCode: 409, headers: CORS, body: JSON.stringify({ message: m, ...extra }) });
 export const internal = (m='Internal server error') => ({ statusCode: 500, headers: CORS, body: JSON.stringify({ message: m }) });

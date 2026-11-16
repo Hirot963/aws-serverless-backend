@@ -1,7 +1,10 @@
-import { ScanCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { db, PRODUCTS_TABLE } from "../shared/db";
-import { ok, internal } from "../shared/response";
+import { PRODUCTS_TABLE } from "../shared/db";
+import { ok, badReq, internal } from "../shared/response";
+import { queryAll, scanAll } from "../shared/paginate";
+
+const byCreatedAtDesc = (a: Record<string, any>, b: Record<string, any>) =>
+  new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
 
 export const handler = async (
   e: APIGatewayProxyEvent,
@@ -9,28 +12,26 @@ export const handler = async (
   try {
     const category = e.queryStringParameters?.category;
     const limitParam = e.queryStringParameters?.limit;
-    const limit = limitParam ? Number(limitParam) : undefined;
+    let limit: number | undefined;
 
-    if (category) {
-      const r = await db.send(
-        new QueryCommand({
+    if (limitParam !== undefined) {
+      limit = Number(limitParam);
+      if (!Number.isInteger(limit) || limit < 1) {
+        return badReq("limit は1以上の整数で指定してください");
+      }
+    }
+
+    const all = category
+      ? await queryAll({
           TableName: PRODUCTS_TABLE,
           IndexName: "category-createdAt-index",
           KeyConditionExpression: "category = :cat",
           ExpressionAttributeValues: { ":cat": category },
-          ...(limit ? { Limit: limit } : {}),
           ScanIndexForward: false,
-        }),
-      );
-      const items = r.Items ?? [];
-      return ok({ items, count: items.length });
-    }
+        })
+      : await scanAll({ TableName: PRODUCTS_TABLE });
 
-    const r = await db.send(new ScanCommand({ TableName: PRODUCTS_TABLE }));
-    const sorted = (r.Items ?? []).sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+    const sorted = all.sort(byCreatedAtDesc);
     const items = limit ? sorted.slice(0, limit) : sorted;
     return ok({ items, count: items.length });
   } catch (err) {

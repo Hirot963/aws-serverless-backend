@@ -1,42 +1,32 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { db, ORDERS_TABLE } from "../shared/db";
+import { ORDERS_TABLE } from "../shared/db";
 import { ok, forbidden, internal } from "../shared/response";
+import { getCaller } from "../shared/auth";
+import { queryAll } from "../shared/paginate";
 
 export const handler = async (
   e: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const claims = e.requestContext.authorizer?.claims;
-    const sellerId = claims?.sub;
-    const groupsRaw = claims?.["cognito:groups"];
-    const groups = Array.isArray(groupsRaw)
-      ? groupsRaw
-      : typeof groupsRaw === "string"
-      ? [groupsRaw]
-      : [];
+    const caller = getCaller(e);
 
-    if (!sellerId) {
+    if (!caller.sub) {
       return forbidden("認証情報が見つかりません");
     }
 
-    if (!groups.includes("seller")) {
+    if (!caller.isSeller) {
       return forbidden("出品者権限が必要です");
     }
 
-    const result = await db.send(
-      new QueryCommand({
-        TableName: ORDERS_TABLE,
-        IndexName: "sellerId-createdAt-index",
-        KeyConditionExpression: "sellerId = :sellerId",
-        ExpressionAttributeValues: {
-          ":sellerId": sellerId,
-        },
-        ScanIndexForward: false,
-      })
-    );
-
-    const items = result.Items ?? [];
+    const items = await queryAll({
+      TableName: ORDERS_TABLE,
+      IndexName: "sellerId-createdAt-index",
+      KeyConditionExpression: "sellerId = :sellerId",
+      ExpressionAttributeValues: {
+        ":sellerId": caller.sub,
+      },
+      ScanIndexForward: false,
+    });
 
     return ok({ items, count: items.length });
   } catch (err: any) {
