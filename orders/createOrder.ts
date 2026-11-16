@@ -7,125 +7,227 @@ import {
   badReq,
   forbidden,
   notFound,
+  conflict,
   internal,
 } from "../shared/response";
+import { getCaller, parseJsonBody } from "../shared/auth";
+import { MAX_STOCK } from "../shared/productInput";
+
+const MAX_ORDER_LINES = 40;
+
+interface RequestedLine {
+  sellerId: string;
+  productId: string;
+  quantity: number;
+  expectedPrice?: number;
+}
+
+interface VerifiedLine {
+  sellerId: string;
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+}
+
+const parseLines = (
+  rawItems: unknown,
+): { ok: true; lines: RequestedLine[] } | { ok: false; message: string } => {
+  if (!Array.isArray(rawItems) || rawItems.length === 0) {
+    return { ok: false, message: "items は1件以上の配列で指定してください" };
+  }
+
+  const merged = new Map<string, RequestedLine>();
+
+  for (const raw of rawItems) {
+    const sellerId = raw?.sellerId;
+    const productId = raw?.productId;
+    const quantity = raw?.quantity;
+    const price = raw?.price;
+
+    if (
+      typeof sellerId !== "string" ||
+      sellerId.length === 0 ||
+      typeof productId !== "string" ||
+      productId.length === 0
+    ) {
+      return {
+        ok: false,
+        message: "各商品に sellerId と productId を指定してください",
+      };
+    }
+    if (
+      typeof quantity !== "number" ||
+      !Number.isInteger(quantity) ||
+      quantity < 1 ||
+      quantity > MAX_STOCK
+    ) {
+      return { ok: false, message: "数量は1以上の整数で指定してください" };
+    }
+    if (price !== undefined && (typeof price !== "number" || !Number.isFinite(price))) {
+      return { ok: false, message: "価格の形式が不正です" };
+    }
+
+    const key = `${sellerId}#${productId}`;
+    const existing = merged.get(key);
+    if (existing) {
+      existing.quantity += quantity;
+      if (existing.quantity > MAX_STOCK) {
+        return { ok: false, message: "数量が多すぎます" };
+      }
+      if (typeof price === "number") {
+        existing.expectedPrice = price;
+      }
+    } else {
+      merged.set(key, {
+        sellerId,
+        productId,
+        quantity,
+        expectedPrice: typeof price === "number" ? price : undefined,
+      });
+    }
+  }
+
+  if (merged.size > MAX_ORDER_LINES) {
+    return {
+      ok: false,
+      message: `一度に注文できる商品は${MAX_ORDER_LINES}種類までです`,
+    };
+  }
+
+  return { ok: true, lines: Array.from(merged.values()) };
+};
 
 export const handler = async (
   e: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const buyerId = e.requestContext.authorizer?.claims?.sub;
+    const caller = getCaller(e);
+    const buyerId = caller.sub;
     if (!buyerId) {
-      return forbidden("Unauthorized: buyer ID not found");
+      return forbidden("認証情報が見つかりません");
+    }
+    if (caller.isSeller) {
+      return forbidden("出品者アカウントでは注文できません");
     }
 
-    const body = e.body ? JSON.parse(e.body) : {};
-    const items = body.items;
-
-    if (!Array.isArray(items) || items.length === 0) {
-      return badReq("items must be a non-empty array");
+    const body = parseJsonBody(e.body);
+    if (!body.ok) {
+      return badReq("JSON の形式が不正です");
     }
 
-    for (const item of items) {
-      if (
-        !item.sellerId ||
-        !item.productId ||
-        typeof item.quantity !== "number" ||
-        item.quantity <= 0
-      ) {
-        return badReq(
-          "Invalid item format. sellerId, productId, and positive quantity are required",
-        );
+    const parsed = parseLines(body.value?.items);
+    if (!parsed.ok) {
+      return badReq(parsed.message);
+    }
+
+    const products = await Promise.all(
+      parsed.lines.map((line) =>
+        db.send(
+          new GetCommand({
+            TableName: PRODUCTS_TABLE,
+            Key: { sellerId: line.sellerId, productId: line.productId },
+          }),
+        ),
+      ),
+    );
+
+    const verified: VerifiedLine[] = [];
+    const missing: string[] = [];
+    const priceChanged: string[] = [];
+    const outOfStock: string[] = [];
+
+    parsed.lines.forEach((line, i) => {
+      const product = products[i].Item;
+      if (!product) {
+        missing.push(line.productId);
+        return;
       }
+      const currentPrice = Number(product.price);
+      if (
+        line.expectedPrice !== undefined &&
+        line.expectedPrice !== currentPrice
+      ) {
+        priceChanged.push(line.productId);
+      }
+      if (Number(product.stock) < line.quantity) {
+        outOfStock.push(line.productId);
+      }
+      verified.push({
+        sellerId: line.sellerId,
+        productId: line.productId,
+        name: String(product.name ?? ""),
+        price: currentPrice,
+        quantity: line.quantity,
+      });
+    });
+
+    if (missing.length > 0) {
+      return notFound("販売が終了した商品がカートに含まれています");
+    }
+    if (priceChanged.length > 0) {
+      return conflict(
+        "価格が変更された商品があります。最新の価格をご確認ください",
+        { reason: "PRICE_CHANGED", productIds: priceChanged },
+      );
+    }
+    if (outOfStock.length > 0) {
+      return conflict("在庫が不足している商品があります", {
+        reason: "OUT_OF_STOCK",
+        productIds: outOfStock,
+      });
     }
 
     const createdAt = new Date().toISOString();
 
-    const verifiedItems: Array<{
-      sellerId: string;
-      productId: string;
-      name: string;
-      price: number;
-      quantity: number;
-    }> = [];
-
-    for (const item of items) {
-      const prodRes = await db.send(
-        new GetCommand({
-          TableName: PRODUCTS_TABLE,
-          Key: { sellerId: item.sellerId, productId: item.productId },
-        }),
-      );
-      if (!prodRes.Item) {
-        return notFound("指定された商品が見つかりません");
-      }
-      verifiedItems.push({
-        sellerId: item.sellerId,
-        productId: item.productId,
-        name: prodRes.Item.name,
-        price: Number(prodRes.Item.price),
-        quantity: item.quantity,
-      });
+    const linesBySeller = new Map<string, VerifiedLine[]>();
+    for (const line of verified) {
+      const list = linesBySeller.get(line.sellerId) ?? [];
+      list.push(line);
+      linesBySeller.set(line.sellerId, list);
     }
 
-    const totalPrice = verifiedItems.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0,
-    );
-
-    const itemsBySeller: Record<string, typeof verifiedItems> = {};
-    for (const item of verifiedItems) {
-      if (!itemsBySeller[item.sellerId]) {
-        itemsBySeller[item.sellerId] = [];
-      }
-      itemsBySeller[item.sellerId].push(item);
-    }
-
-    const transactItems: any[] = [];
-
-    for (const item of verifiedItems) {
-      transactItems.push({
-        Update: {
-          TableName: PRODUCTS_TABLE,
-          Key: {
-            sellerId: item.sellerId,
-            productId: item.productId,
-          },
-          UpdateExpression: "SET stock = stock - :qty",
-          ConditionExpression: "attribute_exists(productId) AND stock >= :qty",
-          ExpressionAttributeValues: {
-            ":qty": item.quantity,
-          },
+    const transactItems: any[] = verified.map((line) => ({
+      Update: {
+        TableName: PRODUCTS_TABLE,
+        Key: { sellerId: line.sellerId, productId: line.productId },
+        UpdateExpression: "SET stock = stock - :qty",
+        ConditionExpression:
+          "attribute_exists(productId) AND stock >= :qty AND price = :price",
+        ExpressionAttributeValues: {
+          ":qty": line.quantity,
+          ":price": line.price,
         },
-      });
-    }
+      },
+    }));
 
-    const createdOrderIds: string[] = [];
-    for (const [sellerId, sellerItems] of Object.entries(itemsBySeller)) {
-      const sellerOrderId = randomUUID();
-      createdOrderIds.push(sellerOrderId);
+    const orderIds: string[] = [];
+    let totalPrice = 0;
 
-      const sellerTotalPrice = sellerItems.reduce(
-        (sum, item) => sum + (Number(item.price) || 0) * item.quantity,
-        0,
-      );
+    for (const [sellerId, sellerLines] of linesBySeller) {
+      const orderId = randomUUID();
+      orderIds.push(orderId);
+
+      const orderItems = sellerLines.map((line) => ({
+        sellerId: line.sellerId,
+        productId: line.productId,
+        name: line.name,
+        price: line.price,
+        quantity: line.quantity,
+        subtotal: line.price * line.quantity,
+      }));
+      const sellerTotal = orderItems.reduce((sum, item) => sum + item.subtotal, 0);
+      totalPrice += sellerTotal;
 
       transactItems.push({
         Put: {
           TableName: ORDERS_TABLE,
           Item: {
             buyerId,
-            orderId: sellerOrderId,
+            orderId,
             sellerId,
-            items: sellerItems.map((item) => ({
-              sellerId: item.sellerId,
-              productId: item.productId,
-              name: item.name ?? "",
-              price: Number(item.price) || 0,
-              quantity: item.quantity,
-              subtotal: (Number(item.price) || 0) * item.quantity,
-            })),
-            totalPrice: sellerTotalPrice,
+            items: orderItems,
+            totalPrice: sellerTotal,
             status: "confirmed",
             createdAt,
           },
@@ -136,29 +238,20 @@ export const handler = async (
     await db.send(new TransactWriteCommand({ TransactItems: transactItems }));
 
     return created({
-      orderId: createdOrderIds[0],
-      orderIds: createdOrderIds,
+      orderId: orderIds[0],
+      orderIds,
       totalPrice,
       status: "confirmed",
       createdAt,
     });
   } catch (err: any) {
-    console.error(err);
+    console.error("createOrder エラー:", err);
 
-    if (
-      err.name === "TransactionCanceledException" ||
-      err.message?.includes("ConditionalCheckFailed")
-    ) {
-      return {
-        statusCode: 409,
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Headers": "Content-Type,Authorization",
-          "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: "在庫が不足している商品があります" }),
-      };
+    if (err?.name === "TransactionCanceledException") {
+      return conflict(
+        "在庫または価格が変更された商品があります。最新の内容をご確認ください",
+        { reason: "CHANGED_DURING_ORDER" },
+      );
     }
 
     return internal();

@@ -1,28 +1,25 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { db, ORDERS_TABLE } from "../shared/db";
+import { ORDERS_TABLE } from "../shared/db";
 import { ok, forbidden, internal } from "../shared/response";
+import { getCaller } from "../shared/auth";
+import { queryAll } from "../shared/paginate";
 
 export const handler = async (
   e: APIGatewayProxyEvent,
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const buyerId = e.requestContext.authorizer?.claims?.sub;
+    const buyerId = getCaller(e).sub;
     if (!buyerId) {
-      return forbidden("Unauthorized: buyer ID not found");
+      return forbidden("認証情報が見つかりません");
     }
 
-    const result = await db.send(
-      new QueryCommand({
-        TableName: ORDERS_TABLE,
-        KeyConditionExpression: "buyerId = :buyerId",
-        ExpressionAttributeValues: {
-          ":buyerId": buyerId,
-        },
-      }),
-    );
-
-    const items = result.Items ?? [];
+    const items = await queryAll({
+      TableName: ORDERS_TABLE,
+      KeyConditionExpression: "buyerId = :buyerId",
+      ExpressionAttributeValues: {
+        ":buyerId": buyerId,
+      },
+    });
 
     items.sort(
       (a, b) =>

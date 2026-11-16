@@ -3,72 +3,49 @@ import { PutCommand } from "@aws-sdk/lib-dynamodb";
 import { randomUUID } from "crypto";
 import { db, PRODUCTS_TABLE } from "../shared/db";
 import { created, badReq, forbidden, internal } from "../shared/response";
+import { getCaller, parseJsonBody } from "../shared/auth";
+import { parseProductInput } from "../shared/productInput";
 
 export const handler = async (
   e: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    const claims = e.requestContext.authorizer?.claims;
-    const sellerId = claims?.sub;
-    const groupsRaw = claims?.["cognito:groups"];
-    const groups = Array.isArray(groupsRaw)
-      ? groupsRaw
-      : typeof groupsRaw === "string"
-      ? [groupsRaw]
-      : [];
+    const caller = getCaller(e);
 
-    if (!sellerId) {
+    if (!caller.sub) {
       return forbidden("認証情報が見つかりません");
     }
 
-    if (!groups.includes("seller")) {
+    if (!caller.isSeller) {
       return forbidden("出品者権限が必要です");
     }
 
-    if (!e.body) {
-      return badReq("リクエストボディが空です");
-    }
-
-    let body: any;
-    try {
-      body = JSON.parse(e.body);
-    } catch {
+    const body = parseJsonBody(e.body);
+    if (!body.ok) {
       return badReq("JSON の形式が不正です");
     }
 
-    const { name, price, category, stock, imageKey, imageUrl } = body;
-
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return badReq("商品名は必須です");
-    }
-    if (name.length > 100) {
-      return badReq("商品名は100文字以内で入力してください");
-    }
-    if (typeof price !== "number" || price < 1 || !Number.isInteger(price)) {
-      return badReq("価格は1以上の整数で入力してください");
-    }
-    if (!category || typeof category !== "string") {
-      return badReq("カテゴリは必須です");
-    }
-    if (typeof stock !== "number" || stock < 0 || !Number.isInteger(stock)) {
-      return badReq("在庫数は0以上の整数で入力してください");
+    const input = parseProductInput(body.value);
+    if (!input.ok) {
+      return badReq(input.message);
     }
 
-    const productId = randomUUID();
-    const createdAt = new Date().toISOString();
+    const { name, price, category, stock, imageKey, imageUrl } = input.value;
 
     const item: Record<string, any> = {
-      sellerId,
-      productId,
-      name: name.trim(),
+      sellerId: caller.sub,
+      productId: randomUUID(),
+      name,
       price,
       category,
       stock,
-      createdAt,
+      createdAt: new Date().toISOString(),
     };
 
-    if (imageKey) item.imageKey = imageKey;
-    if (imageUrl) item.imageUrl = imageUrl;
+    if (imageKey && imageUrl) {
+      item.imageKey = imageKey;
+      item.imageUrl = imageUrl;
+    }
 
     await db.send(
       new PutCommand({
