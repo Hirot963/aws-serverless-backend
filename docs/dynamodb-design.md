@@ -122,7 +122,7 @@ IndexName: category-createdAt-index
 ]
 ```
 
-### GSI: sellerId-createdAt-index
+### GSI: seller-order-index
 
 出品者が自分宛ての注文（受注一覧）を検索するために使用。
 
@@ -138,7 +138,7 @@ IndexName: category-createdAt-index
 KeyConditionExpression: sellerId = :sid
 ExpressionAttributeValues: { ":sid": "8a7b6c5d-..." }
 ScanIndexForward: false
-IndexName: sellerId-createdAt-index
+IndexName: seller-order-index
 ```
 
 ### アクセスパターン

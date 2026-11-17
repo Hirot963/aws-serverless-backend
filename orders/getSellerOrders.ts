@@ -20,7 +20,7 @@ export const handler = async (
 
     const items = await queryAll({
       TableName: ORDERS_TABLE,
-      IndexName: "sellerId-createdAt-index",
+      IndexName: "seller-order-index",
       KeyConditionExpression: "sellerId = :sellerId",
       ExpressionAttributeValues: {
         ":sellerId": caller.sub,
